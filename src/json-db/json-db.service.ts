@@ -1,18 +1,25 @@
-import { Injectable } from '@nestjs/common';
-import { readFileSync, writeFileSync } from 'fs';
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { readFileSync, writeFileSync, existsSync, copyFileSync } from 'fs';
 import { join } from 'path';
 
 @Injectable()
-export class JsonDbService {
-  private readonly dbFilePath = join(__dirname, '..', 'database.json');
+export class JsonDbService implements OnModuleInit {
+  private readonly dbFilePath = join(process.cwd(), 'database.json');
+  private readonly distDbFilePath = join(__dirname, '..', 'database.json');
+
+  onModuleInit() {
+    if (!existsSync(this.distDbFilePath)) {
+      copyFileSync(this.dbFilePath, this.distDbFilePath);
+    }
+  }
 
   private readDbFile() {
-    const data = readFileSync(this.dbFilePath, 'utf-8');
+    const data = readFileSync(this.distDbFilePath, 'utf-8');
     return JSON.parse(data);
   }
 
   private writeDbFile(data: any) {
-    writeFileSync(this.dbFilePath, JSON.stringify(data, null, 2));
+    writeFileSync(this.distDbFilePath, JSON.stringify(data, null, 2));
   }
 
   findAll() {
