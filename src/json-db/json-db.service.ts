@@ -1,6 +1,12 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { readFileSync, writeFileSync, existsSync, copyFileSync } from 'fs';
 import { join } from 'path';
+
+export interface Item {
+  id: number;
+  name: string;
+  description: string;
+}
 
 @Injectable()
 export class JsonDbService implements OnModuleInit {
@@ -13,45 +19,57 @@ export class JsonDbService implements OnModuleInit {
     }
   }
 
-  private readDbFile() {
+  private readDbFile(): Item[] {
     const data = readFileSync(this.distDbFilePath, 'utf-8');
-    return JSON.parse(data);
+    return JSON.parse(data) as Item[];
   }
 
-  private writeDbFile(data: any) {
+  private writeDbFile(data: Item[]): void {
     writeFileSync(this.distDbFilePath, JSON.stringify(data, null, 2));
   }
 
-  findAll() {
+  findAll(): Item[] {
     return this.readDbFile();
   }
 
-  findOne(id: number) {
+  findOne(id: number): Item {
+    console.log('Searching for item with ID:', id);
     const data = this.readDbFile();
-    return data.find((item: any) => item.id === id);
+    console.log('Available items:', data);
+    const item = data.find((item) => item.id === id);
+    if (!item) {
+      throw new NotFoundException(`Item with id ${id} not found`);
+    }
+    return item;
   }
 
-  create(newItem: any) {
+  create(newItem: Item): Item {
     const data = this.readDbFile();
-    data.push(newItem);
+    const id = data.length ? Math.max(...data.map((item) => item.id)) + 1 : 1;
+    const item = { ...newItem, id };
+    data.push(item);
     this.writeDbFile(data);
-    return newItem;
+    return item;
   }
 
-  update(id: number, updatedItem: any) {
+  update(id: number, updatedItem: Partial<Item>): Item {
     const data = this.readDbFile();
-    const index = data.findIndex((item: any) => item.id === id);
+    const index = data.findIndex((item) => item.id === id);
     if (index === -1) {
-      return null;
+      throw new NotFoundException(`Item with id ${id} not found`);
     }
     data[index] = { ...data[index], ...updatedItem };
     this.writeDbFile(data);
     return data[index];
   }
 
-  delete(id: number) {
-    let data = this.readDbFile();
-    data = data.filter((item: any) => item.id !== id);
+  delete(id: number): { deleted: boolean } {
+    const data = this.readDbFile();
+    const index = data.findIndex((item) => item.id === id);
+    if (index === -1) {
+      throw new NotFoundException(`Item with id ${id} not found`);
+    }
+    data.splice(index, 1);
     this.writeDbFile(data);
     return { deleted: true };
   }

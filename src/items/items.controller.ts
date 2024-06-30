@@ -6,8 +6,9 @@ import {
   Param,
   Put,
   Delete,
+  NotFoundException,
 } from '@nestjs/common';
-import { JsonDbService } from '../json-db/json-db.service';
+import { JsonDbService, Item } from '../json-db/json-db.service';
 import { CreateItemDto } from './dto/create-item.dto';
 import { UpdateItemDto } from './dto/update-item.dto';
 import {
@@ -30,7 +31,7 @@ export class ItemsController {
     description: 'The found records',
     type: [CreateItemDto],
   })
-  findAll() {
+  findAll(): Item[] {
     return this.jsonDbService.findAll();
   }
 
@@ -42,8 +43,12 @@ export class ItemsController {
     description: 'The found record',
     type: CreateItemDto,
   })
-  findOne(@Param('id') id: number) {
-    return this.jsonDbService.findOne(id);
+  findOne(@Param('id') id: string): Item {
+    const parsedId = parseInt(id, 10);
+    if (isNaN(parsedId)) {
+      throw new NotFoundException(`Invalid ID: ${id}`);
+    }
+    return this.jsonDbService.findOne(parsedId);
   }
 
   @Post()
@@ -54,7 +59,7 @@ export class ItemsController {
     description: 'The record has been successfully created.',
     type: CreateItemDto,
   })
-  create(@Body() createItemDto: CreateItemDto) {
+  create(@Body() createItemDto: CreateItemDto): Item {
     return this.jsonDbService.create(createItemDto);
   }
 
@@ -67,8 +72,12 @@ export class ItemsController {
     description: 'The record has been successfully updated.',
     type: UpdateItemDto,
   })
-  update(@Param('id') id: number, @Body() updateItemDto: UpdateItemDto) {
-    return this.jsonDbService.update(id, updateItemDto);
+  update(@Param('id') id: string, @Body() updateItemDto: UpdateItemDto): Item {
+    const parsedId = parseInt(id, 10);
+    if (isNaN(parsedId)) {
+      throw new NotFoundException(`Invalid ID: ${id}`);
+    }
+    return this.jsonDbService.update(parsedId, updateItemDto);
   }
 
   @Delete(':id')
@@ -79,7 +88,11 @@ export class ItemsController {
     description: 'The record has been successfully deleted.',
     type: CreateItemDto,
   })
-  delete(@Param('id') id: number) {
-    return this.jsonDbService.delete(id);
+  delete(@Param('id') id: string): { deleted: boolean } {
+    const parsedId = parseInt(id, 10);
+    if (isNaN(parsedId)) {
+      throw new NotFoundException(`Invalid ID: ${id}`);
+    }
+    return this.jsonDbService.delete(parsedId);
   }
 }
