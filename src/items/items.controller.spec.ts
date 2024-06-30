@@ -52,7 +52,7 @@ describe('ItemsController', () => {
   });
 
   it('should return a single item by id', () => {
-    const result = controller.findOne(1);
+    const result = controller.findOne('1');
     expect(result).toEqual(mockData[0]);
     expect(service.findOne).toHaveBeenCalledWith(1);
   });
@@ -66,13 +66,13 @@ describe('ItemsController', () => {
 
   it('should update an existing item', () => {
     const updatedItem = { name: 'Updated Item 1' };
-    const result = controller.update(1, updatedItem);
+    const result = controller.update('1', updatedItem);
     expect(result).toEqual({ ...mockData[0], ...updatedItem });
     expect(service.update).toHaveBeenCalledWith(1, updatedItem);
   });
 
   it('should delete an item by id', () => {
-    const result = controller.delete(1);
+    const result = controller.delete('1');
     expect(result).toEqual({ deleted: true });
     expect(service.delete).toHaveBeenCalledWith(1);
   });
